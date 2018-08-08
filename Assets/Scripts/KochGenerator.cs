@@ -36,6 +36,15 @@ public class KochGenerator : MonoBehaviour {
     protected AnimationCurve generator;
     protected Keyframe[] keys;
 
+    [System.Serializable]
+    public struct StartGen
+    {
+        public bool outwards;
+        public float scale;
+    }
+
+    public StartGen[] startGen;
+
     protected int generationCount;
 
     [SerializeField]
@@ -97,42 +106,16 @@ public class KochGenerator : MonoBehaviour {
         }
         position[initiatorPointAmount] = position[0];
         targetPosition = position;
-    }
 
-    private void OnDrawGizmos()
-    {
-        GetInitiatorPoins();
-        // assign lists and arrays
-        initiatorPoint = new Vector3[initiatorPointAmount];
-        lineSegment = new List<LineSegment>();
-
-        rotateVector = Quaternion.AngleAxis(initialRotation, rotateAxis) * rotateVector;
-
-        for (int i = 0; i < initiatorPointAmount; i++)
+        for (int i = 0; i < startGen.Length; i++)
         {
-            initiatorPoint[i] = rotateVector * initiatorSize;
-            rotateVector = Quaternion.AngleAxis(360 / initiatorPointAmount, rotateAxis) * rotateVector;
-        }
-
-        for (int i = 0; i < initiatorPointAmount; i++)
-        {
-            Gizmos.color = Color.white;
-            Matrix4x4 rotationMatrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.lossyScale);
-            Gizmos.matrix = rotationMatrix;
-            if(i < initiatorPointAmount - 1)
-            {
-                Gizmos.DrawLine(initiatorPoint[i], initiatorPoint[i + 1]);
-            }
-            else
-            {
-                Gizmos.DrawLine(initiatorPoint[i], initiatorPoint[0]);
-            }
+            GenerateKoch(targetPosition, startGen[i].outwards, startGen[i].scale);
         }
     }
 
     protected void GenerateKoch(Vector3[] positions, bool outwards, float generatorMultiplier)
     {
-        //creating line segments
+        lineSegment = new List<LineSegment>();
         lineSegment.Clear();
         for (int i = 0; i < positions.Length - 1; i++)
         {
@@ -235,6 +218,37 @@ public class KochGenerator : MonoBehaviour {
             rotateVector = new Vector3(0, 1, 0);
             rotateAxis = new Vector3(1, 0, 0);
                 break;
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        GetInitiatorPoins();
+
+        initiatorPoint = new Vector3[initiatorPointAmount];
+        lineSegment = new List<LineSegment>();
+
+        rotateVector = Quaternion.AngleAxis(initialRotation, rotateAxis) * rotateVector;
+
+        for (int i = 0; i < initiatorPointAmount; i++)
+        {
+            initiatorPoint[i] = rotateVector * initiatorSize;
+            rotateVector = Quaternion.AngleAxis(360 / initiatorPointAmount, rotateAxis) * rotateVector;
+        }
+
+        for (int i = 0; i < initiatorPointAmount; i++)
+        {
+            Gizmos.color = Color.white;
+            Matrix4x4 rotationMatrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.lossyScale);
+            Gizmos.matrix = rotationMatrix;
+            if (i < initiatorPointAmount - 1)
+            {
+                Gizmos.DrawLine(initiatorPoint[i], initiatorPoint[i + 1]);
+            }
+            else
+            {
+                Gizmos.DrawLine(initiatorPoint[i], initiatorPoint[0]);
+            }
         }
     }
 }

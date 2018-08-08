@@ -8,28 +8,50 @@ public class KochLine : KochGenerator
     LineRenderer lineRenderer;
     [Range(0,1)]
     public float LerpAmount;
+
     Vector3[] lerpPosition;
     public float generateMultiplier;
 
-	void Start ()
+
+    [Tooltip("Download https://github.com/nomand/UnityAudioVisualization")]
+    [Header("Audio")]
+    public bool UseAudio;
+    public Runningtap.AnalyzeAudio audioRead;
+    public int[] audioBand;
+
+    private float[] lerpAudio;
+
+    void Start ()
     {
+        lerpAudio = new float[initiatorPointAmount];
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.enabled = true;
         lineRenderer.useWorldSpace = false;
         lineRenderer.loop = true;
         lineRenderer.positionCount = position.Length;
         lineRenderer.SetPositions(position);
-	}
+        lerpPosition = new Vector3[position.Length];
+    }
 	
 	void Update ()
     {
         if(generationCount != 0)
         {
-            for(int i = 0; i < position.Length; i++)
+            int count = 0;
+            for(int i = 0; i < initiatorPointAmount; i++)
             {
-                lerpPosition[i] = Vector3.Lerp(position[i], targetPosition[i], LerpAmount);
+                lerpAudio[i] = audioRead.AudioBandBuffer[audioBand[i]];
+
+                for (int j = 0; j < (position.Length -1) / initiatorPointAmount; j++)
+                {
+                    lerpPosition[count] = Vector3.Lerp(position[count], targetPosition[count], UseAudio ? lerpAudio[i] : LerpAmount);
+                    count++;
+                }
             }
-            if(useBezierCurves)
+
+            lerpPosition[count] = Vector3.Lerp(position[count], targetPosition[count], UseAudio ? lerpAudio[initiatorPointAmount-1] : LerpAmount);
+
+            if (useBezierCurves)
             {
                 bezierPosition = BezierCurve(lerpPosition, bezierVertexCount);
                 lineRenderer.positionCount = bezierPosition.Length;
@@ -40,23 +62,6 @@ public class KochLine : KochGenerator
                 lineRenderer.positionCount = lerpPosition.Length;
                 lineRenderer.SetPositions(lerpPosition);
             }
-        }
-
-		if(Input.GetKeyDown(KeyCode.O))
-        {
-            GenerateKoch(targetPosition, true, generateMultiplier);
-            lerpPosition = new Vector3[position.Length];
-            lineRenderer.positionCount = position.Length;
-            lineRenderer.SetPositions(position);
-            LerpAmount = 0;
-        }
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            GenerateKoch(targetPosition, false, generateMultiplier);
-            lerpPosition = new Vector3[position.Length];
-            lineRenderer.positionCount = position.Length;
-            lineRenderer.SetPositions(position);
-            LerpAmount = 0;
         }
     }
 }
